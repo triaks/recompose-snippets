@@ -1,24 +1,50 @@
 import React from 'react'
-import { withReducer } from 'recompose'
+import { compose, withReducer, withHandlers } from 'recompose'
 
-const counterReducer = (count, { type }) => {
-  switch (type) {
-    case 'INCREMENT':
-      return count + 1
-    case 'DECREMENT':
-      return count - 1
-    default:
-      return count
-  }
-}
-
-const enhance = withReducer('count', 'dispatch', counterReducer, 0)
-const Counter = ({ count, dispatch }) => (
+const userInput = ({ user, handleUsername, handlePassword }) => (
   <div>
-    Count: {count}
-    <button onClick={() => dispatch({ type: 'INCREMENT' })}>Inc</button>
-    <button onClick={() => dispatch({ type: 'DECREMENT' })}>Dec</button>
+    <input type="email" onChange={handleUsername} />
+    <input type="password" onChange={handlePassword} />
+    <DisplayUser user={user} />
   </div>
 )
 
-export default enhance(Counter)
+const DisplayUser = ({ user: { username } }) => <div>{username}</div>
+
+const initialState = { username: '', password: '' }
+
+const userReducer = (state, action) => {
+  const { type, payload } = action
+  switch (type) {
+    case 'SET_USERNAME':
+      return { ...state, username: payload }
+
+    case 'SET_PASSWORD':
+      return { ...state, password: payload }
+
+    default:
+      return state
+  }
+}
+
+const addReducer = compose(
+  withReducer('user', 'dispatch', userReducer, initialState),
+  withHandlers({
+    handleUsername: ({ dispatch }) => event => {
+      event.preventDefault()
+      dispatch({ type: 'SET_USERNAME', payload: event.target.value })
+    },
+    handlePassword: ({ dispatch }) => event => {
+      event.preventDefault()
+      dispatch({ type: 'SET_PASSWORD', payload: event.target.value })
+    },
+  })
+)
+
+const EnhancedUserInput = addReducer(userInput)
+
+export default (
+  <div>
+    <EnhancedUserInput />
+  </div>
+)
